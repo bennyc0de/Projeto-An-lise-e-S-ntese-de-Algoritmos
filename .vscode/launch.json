@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["test2.txt"]
+            "args": ["test2.txt"],
+            "cwd": "${workspaceFolder}/proj3"
         }
     ]
 }
