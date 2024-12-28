@@ -13,7 +13,6 @@ if not lines:
 n, m, t = map(int, lines[0].strip().split())
 
 # Informações sobre fábricas
-
 factories = {}
 for i in range(1, n + 1):
     factory_id, country_id, max_stock = map(int, lines[i].strip().split())
@@ -57,11 +56,19 @@ prob += lpSum([child_vars[child["id"]] for child in children]), "MaximizeSatisfi
 # Restrições de cada criança: Receber brinquedos apenas de fábricas permitidas
 for child in children:
     child_id = child["id"]
+    # Ensure satisfaction is equal to the sum of the factory to child variables
     prob += (
         lpSum([factory_to_child_vars[(factory_id, child_id)] for factory_id in child["factories"]])
-        <= 1 * child_vars[child_id],
+        == child_vars[child_id],
+        f"ChildSatisfaction_{child_id}",
+    )
+    # Ensure that the sum is at most 1
+    prob += (
+        lpSum([factory_to_child_vars[(factory_id, child_id)] for factory_id in child["factories"]])
+        <= 1,
         f"ChildRequest_{child_id}",
     )
+
 
 # Restrições de capacidade das fábricas
 for factory_id, factory_data in factories.items():
@@ -86,7 +93,8 @@ for country_id in range(1, m + 1):
                 for factory_id, factory_data in factories.items()
                 if factory_data["country"] == country_id
                 for child in children
-                if factory_id in child["factories"]
+                if factory_id in child["factories"] and 
+                factory_data["country"] != child["country"]
             ]
         )
         <= countries[country_id]["max_exports"],
@@ -95,20 +103,32 @@ for country_id in range(1, m + 1):
     prob += (
         lpSum(
             [
-                child_vars[child["id"]]
+                factory_to_child_vars[(factory_id, child["id"])]
+                for factory_id, factory_data in factories.items()
                 for child in children
-                if child["country"] == country_id
+                if child["country"] == country_id and factory_id in child["factories"]
             ]
         )
         >= countries[country_id]["min_toys"],
-        f"MinToys_{country_id}",
+        f"MinToysInCirculation_{country_id}",
     )
 
+# Save the problem formulation to a file
+prob.writeLP("SantaToyDistribution.lp")
+
 # Solve the problem using GLPK
-glpk_solver = GLPK(msg=True)
+glpk_solver = GLPK(msg=False)
 prob.solve(glpk_solver)
 
-# Print the results
+ans = 0
+# Check if any child satisfaction variable needs to be reset to 0
 for child in children:
     child_id = child["id"]
-    print(f"Child {child_id} satisfied: {child_vars[child_id].varValue}")
+    if child_vars[child_id].varValue is None or child_vars[child_id].varValue != 0:
+        ans += 1
+
+if ans != 0:
+    print(ans)
+else:
+    print(-1)
+
