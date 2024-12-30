@@ -43,19 +43,15 @@ child_vars = p.LpVariable.dicts(
     cat="Binary",
 )
 
-# Variáveis de fluxo: brinquedos enviados de fábricas para crianças
-# Restrict to valid factory-child pairs
-valid_factory_child_pairs = [
-    (factory_id, child["id"])
-    for child in children
-    for factory_id in child["factories"]  # Only include factories in the child's wishlist
-]
-
 factory_to_child_vars = p.LpVariable.dicts(
     "FactoryToChild",
-    valid_factory_child_pairs,
+    [
+        (factory_id, child["id"])
+        for child in children
+        for factory_id in child["factories"]
+    ],
     0,
-    None,   
+    None,
     cat="Binary",
 )
 
@@ -80,7 +76,7 @@ for factory_id, factory_data in factories.items():
         p.lpSum(
             [
                 factory_to_child_vars[(factory_id, child_id)]
-                for (factory_id_pair, child_id) in valid_factory_child_pairs
+                for (factory_id_pair, child_id) in factory_to_child_vars
                 if factory_id_pair == factory_id
             ]
         )
@@ -95,7 +91,7 @@ for country_id in range(1, m + 1):
         p.lpSum(
             [
                 factory_to_child_vars[(factory_id, child_id)]
-                for factory_id, child_id in valid_factory_child_pairs
+                for factory_id, child_id in factory_to_child_vars
                 if factory_country[factory_id] == country_id and factory_country[factory_id] != child_country[child_id]
             ]
         )
@@ -107,7 +103,7 @@ for country_id in range(1, m + 1):
         p.lpSum(
             [
                 factory_to_child_vars[(factory_id, child_id)]
-                for factory_id, child_id in valid_factory_child_pairs
+                for factory_id, child_id in factory_to_child_vars
                 if child_country[child_id] == country_id
             ]
         )
