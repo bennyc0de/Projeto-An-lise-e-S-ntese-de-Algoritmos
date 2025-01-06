@@ -77,7 +77,7 @@ for child in children:
         f"ChildSatisfactionAndRequest_{child_id}",
     )
 
-max_iter = max(m, n, t)
+max_iter = max(m, n)
 
 for i in range(1, max_iter + 1):
     if i <= n:
