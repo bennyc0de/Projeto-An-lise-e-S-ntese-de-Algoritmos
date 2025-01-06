@@ -1,7 +1,7 @@
 import sys
 import pulp as p
 
-# Lê todas as linhas da entrada padrão
+# Lê todas as linhas da entrada padrão dsddssfffffff
 lines = sys.stdin.readlines()
 
 if not lines:
@@ -77,51 +77,51 @@ for child in children:
         f"ChildSatisfactionAndRequest_{child_id}",
     )
 
-max_iter = max(m, n)
+n = len(factories)
+# Loop for factory capacity constraints
+for i in range(1, n + 1):
+    # Restrições de capacidade das fábricas
+    factory_id = list(factories.keys())[i - 1]
+    factory_data = factories[factory_id]
+    prob += (
+        p.lpSum(
+            [
+                factory_to_child_vars[(factory_id, child_id)]
+                for (factory_id_pair, child_id) in factory_to_child_vars
+                if factory_id_pair == factory_id
+            ]
+        )
+        <= factory_data["max_stock"],
+        f"FactoryCapacity_{factory_id}",
+    )
 
-for i in range(1, max_iter + 1):
-    if i <= n:
-        # Restrições de capacidade das fábricas
-        factory_id = list(factories.keys())[i - 1]
-        factory_data = factories[factory_id]
-        prob += (
-            p.lpSum(
-                [
-                    factory_to_child_vars[(factory_id, child_id)]
-                    for (factory_id_pair, child_id) in factory_to_child_vars
-                    if factory_id_pair == factory_id
-                ]
-            )
-            <= factory_data["max_stock"],
-            f"FactoryCapacity_{factory_id}",
+# Loop for export constraints by country
+for i in range(1, m + 1):
+    # Restrições de exportação máxima por país
+    country_id = i
+    prob += (
+        p.lpSum(
+            [
+                factory_to_child_vars[(factory_id, child_id)]
+                for factory_id, child_id in factory_to_child_vars
+                if factory_country[factory_id] == country_id and factory_country[factory_id] != child_country[child_id]
+            ]
         )
-
-    if i <= m:
-        # Restrições de exportação máxima por país
-        country_id = i
-        prob += (
-            p.lpSum(
-                [
-                    factory_to_child_vars[(factory_id, child_id)]
-                    for factory_id, child_id in factory_to_child_vars
-                    if factory_country[factory_id] == country_id and factory_country[factory_id] != child_country[child_id]
-                ]
-            )
-            <= countries[country_id]["max_exports"],
-            f"MaxExport_{country_id}",
+        <= countries[country_id]["max_exports"],
+        f"MaxExport_{country_id}",
+    )
+    # Restrições de exportação mínima por país
+    prob += (
+        p.lpSum(
+            [
+                factory_to_child_vars[(factory_id, child_id)]
+                for factory_id, child_id in factory_to_child_vars
+                if child_country[child_id] == country_id
+            ]
         )
-        # Restrições de exportação mínima por país
-        prob += (
-            p.lpSum(
-                [
-                    factory_to_child_vars[(factory_id, child_id)]
-                    for factory_id, child_id in factory_to_child_vars
-                    if child_country[child_id] == country_id
-                ]
-            )
-            >= countries[country_id]["min_toys"],
-            f"MinToysInCirculation_{country_id}",
-        )
+        >= countries[country_id]["min_toys"],
+        f"MinToysInCirculation_{country_id}",
+    )
 
 # Save the problem formulation to a file
 # prob.writeLP("SantaToyDistribution.lp")
