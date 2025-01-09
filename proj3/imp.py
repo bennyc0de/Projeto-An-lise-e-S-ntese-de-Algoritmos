@@ -9,7 +9,7 @@ if not lines:
     sys.exit(1)
 
 # Processa os dados
-# A primeira linha contém o número de fábricas, países e crianças
+# A primeira linha contém o número de fábricas, países e crianças please work
 n, m, t = map(int, lines[0].strip().split())
 
 # Informações sobre fábricas
@@ -131,7 +131,7 @@ for country_id, country_data in countries.items():
     )
 
 # Save the problem formulation to a file
-prob.writeLP("SantaToyDistribution.lp")
+#prob.writeLP("SantaToyDistribution.lp")
 
 # Solve the problem using GLPK
 solver = p.PULP_CBC_CMD(msg=False)
